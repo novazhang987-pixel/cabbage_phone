@@ -1,0 +1,17 @@
+{
+  "name": "食材库",
+  "short_name": "食材库",
+  "description": "记录家里有什么食材、什么时候过期、还剩多少（数据存在本机，离线也能用）",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f7f8",
+  "theme_color": "#2f9e6f",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

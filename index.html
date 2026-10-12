@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#2f9e6f" />
+<title>食材库</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="食材库" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand"><span data-i18n="app"></span><small data-i18n="tagline"></small></div>
+
+  <nav class="nav-tabs" id="navTabs">
+    <button data-view="food" class="active" data-i18n="nav_food"></button>
+    <button data-view="report" data-i18n="nav_report"></button>
+    <button data-view="logs" data-i18n="nav_logs"></button>
+    <button data-view="trash" data-i18n="nav_trash"></button>
+  </nav>
+
+  <div class="header-actions">
+    <button class="btn sm" id="shoppingBtn">
+      🛒 <span data-i18n="shopping"></span> <b id="shoppingCount">0</b>
+    </button>
+    <div class="lang-switch" id="langSwitch">
+      <button data-lang="zh">中文</button>
+      <button data-lang="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ 食材 ============ -->
+  <section id="view-food">
+    <div class="banner" id="banner" hidden>
+      <span class="dot"></span>
+      <span id="bannerText"></span>
+      <span style="margin-left:auto;opacity:.6;font-size:.8rem" data-i18n="banner_hint"></span>
+    </div>
+
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="toolbar">
+      <input class="search" type="search" id="searchInput" data-i18n-ph="ph_search" />
+      <select id="categorySelect"></select>
+      <select id="locationSelect"></select>
+      <select id="statusSelect"></select>
+      <select id="sortSelect"></select>
+      <div class="spacer"></div>
+      <button class="btn icon" id="voiceBtn" data-i18n-title="btn_voice">🎤</button>
+      <button class="btn" id="batchBtn" data-i18n="btn_batch"></button>
+      <button class="btn" id="cleanupBtn" data-i18n="btn_cleanup"></button>
+      <button class="btn primary" id="addBtn" data-i18n="btn_add"></button>
+    </div>
+
+    <div class="grid" id="foodGrid"></div>
+    <div class="empty" id="foodEmpty" hidden></div>
+  </section>
+
+  <!-- ============ 报表 ============ -->
+  <section id="view-report" hidden>
+    <div class="toolbar">
+      <select id="reportPeriod"></select>
+      <input type="date" id="reportDate" style="width:auto" />
+      <div class="spacer"></div>
+      <a class="btn" href="/api/export" data-i18n="btn_export"></a>
+      <a class="btn" href="/api/export?format=csv&kind=ingredients" data-i18n="btn_export_csv"></a>
+      <label class="btn" for="importFile" data-i18n="btn_import"></label>
+      <input type="file" id="importFile" accept=".json,application/json" hidden />
+    </div>
+    <div id="reportBody"></div>
+  </section>
+
+  <!-- ============ 流水 ============ -->
+  <section id="view-logs" hidden>
+    <div class="toolbar">
+      <select id="logAction"></select>
+      <input type="date" id="logFrom" style="width:auto" />
+      <input type="date" id="logTo" style="width:auto" />
+      <input type="search" id="logSearch" style="flex:1 1 150px" data-i18n-ph="ph_search" />
+    </div>
+    <div class="panel" id="logsBody"></div>
+  </section>
+
+  <!-- ============ 回收站 ============ -->
+  <section id="view-trash" hidden>
+    <div class="toolbar">
+      <div class="spacer"></div>
+      <button class="btn danger" id="emptyTrashBtn" data-i18n="btn_empty_trash"></button>
+    </div>
+    <div class="panel" id="trashBody"></div>
+  </section>
+
+</main>
+
+<!-- 批量操作条 -->
+<div class="batch-bar" id="batchBar">
+  <span class="count" id="batchCount"></span>
+  <button class="btn sm" data-batch="use_up" data-i18n="act_finish"></button>
+  <button class="btn sm" data-batch="discard" data-i18n="act_discard"></button>
+  <button class="btn sm" data-batch="delete" data-i18n="btn_delete"></button>
+  <button class="btn sm" id="batchCancel" data-i18n="btn_batch_exit"></button>
+</div>
+
+<!-- 购物清单抽屉 -->
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h2 data-i18n="shopping"></h2>
+    <span class="tag" id="drawerPending"></span>
+    <button class="btn sm ghost" id="drawerClose" style="margin-left:auto">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="shop-add">
+      <input id="shopName" data-i18n-ph="shopping_add" />
+      <button class="btn primary sm" id="shopAddBtn">＋</button>
+    </div>
+    <div id="shopList"></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn sm" id="checkoutBtn" data-i18n="checkout"></button>
+    <button class="btn sm" id="clearDoneBtn" data-i18n="clear_done"></button>
+  </div>
+</aside>
+
+<!-- 新增 / 编辑弹窗 -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle"></h2>
+    <div class="sub" id="modalSub"></div>
+    <form id="ingredientForm">
+      <div class="form-grid">
+        <div class="full">
+          <label class="f" data-i18n="f_name"></label>
+          <input id="f-name" required autocomplete="off" />
+        </div>
+        <div>
+          <label class="f" data-i18n="f_category"></label>
+          <input id="f-category" list="categoryList" autocomplete="off" />
+        </div>
+        <div>
+          <label class="f" data-i18n="f_location"></label>
+          <input id="f-location" list="locationList" autocomplete="off" />
+        </div>
+        <div>
+          <label class="f" data-i18n="f_quantity"></label>
+          <input id="f-quantity" type="number" step="0.01" min="0" />
+        </div>
+        <div>
+          <label class="f" data-i18n="f_unit"></label>
+          <input id="f-unit" list="unitList" autocomplete="off" />
+        </div>
+        <div>
+          <label class="f" data-i18n="f_purchase"></label>
+          <input id="f-purchase" type="date" />
+        </div>
+        <div>
+          <label class="f" data-i18n="f_shelf"></label>
+          <input id="f-shelf" type="number" min="0" max="3650" placeholder="" />
+        </div>
+        <div class="full">
+          <label class="f" data-i18n="f_expiry"></label>
+          <input id="f-expiry" type="date" />
+        </div>
+        <div class="full">
+          <label class="f" data-i18n="f_note"></label>
+          <input id="f-note" autocomplete="off" />
+        </div>
+      </div>
+
+      <datalist id="categoryList"></datalist>
+      <datalist id="locationList"></datalist>
+      <datalist id="unitList"></datalist>
+
+      <div class="voice-row">
+        <input id="sentenceInput" data-i18n-ph="voice_type_ph" autocomplete="off" />
+        <button type="button" class="btn" id="sentenceBtn" data-i18n="voice_parse"></button>
+      </div>
+
+      <div class="voice-hint" id="voiceHint"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn" id="voiceInModal" data-i18n-title="btn_voice">🎤</button>
+        <button type="button" class="btn danger" id="deleteBtn" hidden data-i18n="btn_delete"></button>
+        <div class="spacer"></div>
+        <button type="button" class="btn" id="cancelBtn" data-i18n="btn_cancel"></button>
+        <button type="submit" class="btn primary" data-i18n="btn_save"></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="i18n.js"></script>
+<script src="parser.js"></script>
+<script src="localdb.js"></script>
+<script src="app.js"></script>
+<script>
+  // Service Worker 只在安全上下文注册：https 或本机。局域网 http 访问时浏览器不给注册。
+  if ("serviceWorker" in navigator && (location.protocol === "https:" ||
+      location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () { /* 注册失败不影响使用 */ });
+    });
+  }
+</script>
+</body>
+</html>
